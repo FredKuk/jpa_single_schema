@@ -1,0 +1,66 @@
+package com.demo.demo;
+
+import org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl;
+import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
+
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        entityManagerFactoryRef = "jadenEntityManager",
+        transactionManagerRef = "jadenTransactionManager",
+        basePackages = "com.demo.demo"
+)
+public class JpaConfig {
+    @Bean
+    @ConfigurationProperties("spring.datasource.jaden")
+    public DataSourceProperties jadenDataSourceProperties(){
+        return new DataSourceProperties();
+    }
+    
+    @Bean
+    public DataSource jadenDataSource(){
+        return jadenDataSourceProperties()
+            .initializeDataSourceBuilder()
+            .type(HikariDataSource.class)
+            .build();
+    }
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean jadenEntityManager() {
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        em.setDataSource(jadenDataSource());
+        em.setPackagesToScan("package com.demo.demo");
+
+        HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
+        em.setJpaVendorAdapter(adapter);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("hibernate.physical_naming_strategy", PhysicalNamingStrategyStandardImpl.class.getName());
+        properties.put("hibernate.implicit_naming_strategy", ImplicitNamingStrategyLegacyJpaImpl.class.getName());
+        em.setJpaPropertyMap(properties);
+        return em;
+    }
+    
+    @Bean
+    public PlatformTransactionManager jadenTransactionManager() {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(jadenEntityManager().getObject());
+
+        return transactionManager;
+    }
+}
