@@ -19,7 +19,7 @@ ALTER TABLE customer
 
 ALTER TABLE customer
 	MODIFY COLUMN cusNo INTEGER NOT NULL AUTO_INCREMENT;
-
+		
 -- 상품
 CREATE TABLE good (
 	goodNo INTEGER NOT NULL, -- 상품번호,
